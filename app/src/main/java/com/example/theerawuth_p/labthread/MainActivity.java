@@ -1,6 +1,7 @@
 package com.example.theerawuth_p.labthread;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -13,6 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+
+import com.example.theerawuth_p.labthread.service.CounterIntentService;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Object> {
 
@@ -29,9 +32,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 6: AsyncTaskLoader
+        // Thread Method 7: IntentService
         // **//
-        getSupportLoaderManager().initLoader(1, null, this);
+        Intent intent = new Intent(MainActivity.this, CounterIntentService.class);
+        intent.putExtra("abc","123");
+        startService(intent);
 
     }
 
