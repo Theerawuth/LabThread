@@ -14,12 +14,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Object>  {
 
     int counter;
     TextView tvCounter;
-    
-    SampleAsyncTask sampleAsyncTask;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,49 +29,82 @@ public class MainActivity extends AppCompatActivity {
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 5: AsynTask
+        // Thread Method 6: AsyncTaskLoader
         // **//
-        sampleAsyncTask = new SampleAsyncTask();
-        sampleAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0, 100);
+        getSupportLoaderManager().initLoader(1, null, this);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sampleAsyncTask.cancel(true);
     }
 
-    class SampleAsyncTask extends AsyncTask<Integer, Float, Boolean> {
+    @Override
+    public Loader<Object> onCreateLoader(int id, Bundle args) {
+        if (id == 1) {
+            return new AdderAsyncTaskLoader(MainActivity.this, 5, 11);
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Object> loader, Object data) {
+        Log.d("ATL", "onLoadFinish");
+        if (loader.getId() == 1) {
+            Integer result = (Integer) data;
+            tvCounter.setText(result + "");
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Object> loader) {
+
+    }
+
+    static class AdderAsyncTaskLoader extends AsyncTaskLoader<Object> {
+
+        int a, b;
+
+        Integer result;
+
+        Handler handler;
+
+        public AdderAsyncTaskLoader(Context context, int a, int b) {
+            super(context);
+            this.a = a;
+            this.b = b;
+        }
+
         @Override
-        protected Boolean doInBackground(Integer... integers) {
-            int start = integers[0]; //0
-            int end = integers[1]; //100
-            for(int i = start; i < end; i++) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-                publishProgress(i + 0.0f);
+        protected void onStartLoading() {
+            super.onStartLoading();
+            Log.d("ATL", "onStartLoading");
+            if(result != null) {
+                deliverResult(result);
             }
-            return true;
+            forceLoad();
         }
 
         @Override
-        protected void onProgressUpdate(Float... values) {
-            super.onProgressUpdate(values);
-            // Run on MainThread
-            float progress = values[0];
-            tvCounter.setText(progress + "%");
+        public Integer loadInBackground() {
+            // Background Thread
+            Log.d("ATL", "LoadInBackground");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+
+            }
+
+            result = a + b;
+            return result;
         }
 
         @Override
-        protected void onPostExecute(Boolean aBoolean) {
-            super.onPostExecute(aBoolean);
-            // Run on MainThread
-            // work with Boolean
+        protected void onStopLoading() {
+            super.onStopLoading();
+            Log.d("ATL", "onStopLoading");
         }
     }
 }
