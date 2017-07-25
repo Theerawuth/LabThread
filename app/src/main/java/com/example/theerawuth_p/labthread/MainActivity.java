@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
 
     TextView tvCounter;
     Thread thread;
+    Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +31,16 @@ public class MainActivity extends AppCompatActivity {
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 1: Thread
+        // Thread Method 2: Thread with Handler
         // **//
+        handler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                // Run in Main Thread
+                tvCounter.setText(msg.arg1 + "");
+            }
+        };
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -43,13 +52,10 @@ public class MainActivity extends AppCompatActivity {
                     }catch (InterruptedException e) {
                         return;
                     }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //UIi Thread
-                            tvCounter.setText(counter + "");
-                        }
-                    });
+
+                    Message msg = new Message();
+                    msg.arg1 = counter;
+                    handler.sendMessage(msg);
                 }
             }
         });
