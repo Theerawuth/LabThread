@@ -17,9 +17,11 @@ import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
 
     int counter;
-
     TextView tvCounter;
-    Handler handler;
+
+    HandlerThread backgroundHandlerThread;
+    Handler backgroundHandler;
+    Handler mainHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,25 +32,45 @@ public class MainActivity extends AppCompatActivity {
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 3: Handler Only
+        // Thread Method 4: HandlerThread
         // **//
-        handler = new Handler(Looper.getMainLooper()) {
+        backgroundHandlerThread = new HandlerThread("BackgroundHandlerThread");
+        backgroundHandlerThread.start();
+
+        backgroundHandler = new Handler(backgroundHandlerThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
-                // Run in Main Thread
-                counter++;
-                tvCounter.setText(counter + "");
-                if(counter < 100)
-                    sendEmptyMessageDelayed(0, 1000);
+                // Run with background
+                Message msgMain = new Message();
+                msgMain.arg1 = msg.arg1 + 1;
+                mainHandler.sendMessage(msgMain);
             }
         };
-        handler.sendEmptyMessageDelayed(0 ,1000);
+
+        mainHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                //Run with Main Thread
+                tvCounter.setText(msg.arg1 + "");
+                if (msg.arg1 < 100) {
+                    Message msgBack = new Message();
+                    msgBack.arg1 = msg.arg1;
+                    backgroundHandler.sendMessageDelayed(msgBack, 1000);
+                }
+            }
+        };
+
+        Message msgBack = new Message();
+        msgBack.arg1 = 0; // Start count at 0
+        backgroundHandler.sendMessageDelayed(msgBack, 1000);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        backgroundHandlerThread.quit();
     }
 }
