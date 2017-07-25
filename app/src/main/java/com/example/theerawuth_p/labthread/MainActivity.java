@@ -18,10 +18,8 @@ public class MainActivity extends AppCompatActivity {
 
     int counter;
     TextView tvCounter;
-
-    HandlerThread backgroundHandlerThread;
-    Handler backgroundHandler;
-    Handler mainHandler;
+    
+    SampleAsyncTask sampleAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,45 +30,49 @@ public class MainActivity extends AppCompatActivity {
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 4: HandlerThread
+        // Thread Method 5: AsynTask
         // **//
-        backgroundHandlerThread = new HandlerThread("BackgroundHandlerThread");
-        backgroundHandlerThread.start();
-
-        backgroundHandler = new Handler(backgroundHandlerThread.getLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                // Run with background
-                Message msgMain = new Message();
-                msgMain.arg1 = msg.arg1 + 1;
-                mainHandler.sendMessage(msgMain);
-            }
-        };
-
-        mainHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                //Run with Main Thread
-                tvCounter.setText(msg.arg1 + "");
-                if (msg.arg1 < 100) {
-                    Message msgBack = new Message();
-                    msgBack.arg1 = msg.arg1;
-                    backgroundHandler.sendMessageDelayed(msgBack, 1000);
-                }
-            }
-        };
-
-        Message msgBack = new Message();
-        msgBack.arg1 = 0; // Start count at 0
-        backgroundHandler.sendMessageDelayed(msgBack, 1000);
+        sampleAsyncTask = new SampleAsyncTask();
+        sampleAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0, 100);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        backgroundHandlerThread.quit();
+        sampleAsyncTask.cancel(true);
+    }
+
+    class SampleAsyncTask extends AsyncTask<Integer, Float, Boolean> {
+        @Override
+        protected Boolean doInBackground(Integer... integers) {
+            int start = integers[0]; //0
+            int end = integers[1]; //100
+            for(int i = start; i < end; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                publishProgress(i + 0.0f);
+            }
+            return true;
+        }
+
+        @Override
+        protected void onProgressUpdate(Float... values) {
+            super.onProgressUpdate(values);
+            // Run on MainThread
+            float progress = values[0];
+            tvCounter.setText(progress + "%");
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            // Run on MainThread
+            // work with Boolean
+        }
     }
 }
