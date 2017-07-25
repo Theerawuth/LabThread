@@ -14,7 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Object>  {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Object> {
 
     int counter;
     TextView tvCounter;
@@ -81,22 +81,38 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         protected void onStartLoading() {
             super.onStartLoading();
             Log.d("ATL", "onStartLoading");
-            if(result != null) {
+            // Check Result
+            if (result != null) {
                 deliverResult(result);
             }
-            forceLoad();
+            // Initialize Handler receive content changed
+            if (handler == null) {
+                handler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        super.handleMessage(msg);
+                        a = (int) (Math.random() * 100);
+                        b = (int) (Math.random() * 100);
+                        onContentChanged();
+                        handler.sendEmptyMessageDelayed(0, 3000);
+                    }
+                };
+                handler.sendEmptyMessageDelayed(0, 3000);
+            }
+            if (takeContentChanged() || result == null) {
+                forceLoad();
+            }
         }
 
         @Override
         public Integer loadInBackground() {
             // Background Thread
             Log.d("ATL", "LoadInBackground");
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-
-            }
-
+//            try {
+//                Thread.sleep(5000);
+//            } catch (InterruptedException e) {
+//
+//            }
             result = a + b;
             return result;
         }
@@ -105,6 +121,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         protected void onStopLoading() {
             super.onStopLoading();
             Log.d("ATL", "onStopLoading");
+        }
+
+        @Override
+        protected void onReset() {
+            super.onReset();
+            //Destroy handler
+            if (handler != null) {
+                handler.removeCallbacksAndMessages(null);
+                handler = null;
+            }
         }
     }
 }
