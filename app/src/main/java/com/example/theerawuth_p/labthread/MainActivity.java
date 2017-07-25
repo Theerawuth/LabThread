@@ -19,7 +19,6 @@ public class MainActivity extends AppCompatActivity {
     int counter;
 
     TextView tvCounter;
-    Thread thread;
     Handler handler;
 
     @Override
@@ -31,41 +30,25 @@ public class MainActivity extends AppCompatActivity {
         tvCounter = (TextView) findViewById(R.id.tvCounter);
 
         //**
-        // Thread Method 2: Thread with Handler
+        // Thread Method 3: Handler Only
         // **//
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 // Run in Main Thread
-                tvCounter.setText(msg.arg1 + "");
+                counter++;
+                tvCounter.setText(counter + "");
+                if(counter < 100)
+                    sendEmptyMessageDelayed(0, 1000);
             }
         };
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // Run in background
-                for (int i = 0; i < 100; i++) {
-                    counter++;
-                    try{
-                        Thread.sleep(1000);
-                    }catch (InterruptedException e) {
-                        return;
-                    }
-
-                    Message msg = new Message();
-                    msg.arg1 = counter;
-                    handler.sendMessage(msg);
-                }
-            }
-        });
-        thread.start();
+        handler.sendEmptyMessageDelayed(0 ,1000);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        thread.interrupt();
     }
 }
